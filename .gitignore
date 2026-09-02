@@ -1,5 +1,14 @@
+<<<<<<< Updated upstream
 *.docx
 AI_IDS/
 Data Sets/
 PPT'S/
 *.txt
+=======
+*.docx
+AI_IDS/
+Data Sets/
+PPT'S/
+*.txt
+DATASETS/
+>>>>>>> Stashed changes
