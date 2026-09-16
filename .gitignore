@@ -2,13 +2,13 @@
 *.docx
 AI_IDS/
 Data Sets/
-PPT'S/
+# PPT'S/
 *.txt
 =======
 *.docx
 AI_IDS/
 Data Sets/
-PPT'S/
+# PPT'S/
 *.txt
 DATASETS/
 >>>>>>> Stashed changes
