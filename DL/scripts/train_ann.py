@@ -14,16 +14,17 @@ from sklearn.metrics import (
     recall_score,
     f1_score,
     roc_auc_score,
-    confusion_matrix
+    confusion_matrix,
+    roc_curve
 )
 
 
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import (
     Input,
-    Conv1D,
-    Flatten,
-    Dense
+    Dense,
+    Dropout,
+    BatchNormalization
 )
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import (
@@ -55,80 +56,73 @@ DEBUG_ONE_FOLD = False
 
 
 # ==========================================================
-# BUILD PCC-CNN MODEL
+# BUILD ANN MODEL
 # ==========================================================
 
-def build_pcc_cnn(input_shape, classification="binary", num_classes=None):
+def build_pcc_ann(input_shape, classification="binary", num_classes=None):
 
-    model = Sequential(name="PCC_CNN")
+    model = Sequential(name="ANN")
 
     # ------------------------------------------------------
     # Input Layer
     # ------------------------------------------------------
-    model.add(Input(shape=input_shape))
-
-    # ------------------------------------------------------
-    # Convolution Block 1
-    # ------------------------------------------------------
     model.add(
-        Conv1D(
-            filters=96,
-            kernel_size=4,
-            strides=1,
-            padding="same",
-            activation="relu",
-            name="Conv1"
-        )
+        Input(shape=(input_shape,))
     )
 
     # ------------------------------------------------------
-    # Convolution Block 2
+    # Hidden Layer 1
     # ------------------------------------------------------
     model.add(
-        Conv1D(
-            filters=64,
-            kernel_size=3,
-            strides=1,
-            padding="same",
+        Dense(
+            512,
             activation="relu",
-            name="Conv2"
+            name="Dense_512"
         )
     )
 
+    model.add(BatchNormalization())
+
+    model.add(Dropout(0.3))
+
     # ------------------------------------------------------
-    # Convolution Block 3
+    # Hidden Layer 2
     # ------------------------------------------------------
     model.add(
-        Conv1D(
-            filters=32,
-            kernel_size=2,
-            strides=1,
-            padding="same",
+        Dense(
+            128,
             activation="relu",
-            name="Conv3"
+            name="Dense_128"
         )
     )
 
-    # ------------------------------------------------------
-    # Flatten
-    # ------------------------------------------------------
-    model.add(Flatten(name="Flatten"))
+    model.add(BatchNormalization())
+
+    model.add(Dropout(0.3))
 
     # ------------------------------------------------------
-    # Fully Connected Layers
+    # Hidden Layer 3
     # ------------------------------------------------------
-    model.add(Dense(512, activation="relu", name="Dense_512"))
-
-    model.add(Dense(128, activation="relu", name="Dense_128"))
-
-    model.add(Dense(32, activation="relu", name="Dense_32"))
+    model.add(
+        Dense(
+            32,
+            activation="relu",
+            name="Dense_32"
+        )
+    )
 
     # ------------------------------------------------------
     # Output Layer
     # ------------------------------------------------------
     if classification == "binary":
 
-        model.add(Dense(1, activation="sigmoid", name="Output"))
+        model.add(
+            Dense(
+                1,
+                activation="sigmoid",
+                name="Output"
+            )
+        )
 
         loss_function = "binary_crossentropy"
 
@@ -167,12 +161,12 @@ DATASET_FILE = (
 )
 
 MODEL_DIR = (
-    f"{PROJECT_ROOT}/MODELS/"
+    f"{PROJECT_ROOT}/DL/MODELS/ANN/"
     f"threshold_{THRESHOLD}"
 )
 
 RESULT_DIR = (
-    f"{PROJECT_ROOT}/RESULTS/"
+    f"{PROJECT_ROOT}/DL/RESULTS/ANN/"
     f"threshold_{THRESHOLD}"
 )
 
@@ -367,47 +361,33 @@ for fold, (train_idx, test_idx) in enumerate(skf.split(X, y), start=1):
     import joblib
     # Save scaler (only once)
     if fold == 1:
-        os.makedirs(MODEL_SAVE_PATH, exist_ok=True)
+        os.makedirs(MODEL_DIR, exist_ok=True)
         joblib.dump(
         scaler,
         os.path.join(
-                  MODEL_SAVE_PATH,
+                  MODEL_DIR,
                             "scaler.pkl"
         )
        )
-       print("Scaler Saved.")
+    print("Scaler Saved.")
        
     print("Training Mean :", np.mean(X_train))
     print("Training Std  :", np.std(X_train))
 
-    # ------------------------------------------------------
-    # Reshape for CNN
-    # ------------------------------------------------------
+   
 
-    X_train = X_train.reshape(
-        X_train.shape[0],
-        X_train.shape[1],
-        1
-    )
-
-    X_test = X_test.reshape(
-        X_test.shape[0],
-        X_test.shape[1],
-        1
-    )
-
-    print("\nReshaped Dataset")
+    print("\nANN Input Shape")
     print("X_train :", X_train.shape)
     print("X_test  :", X_test.shape)
 
     # ------------------------------------------------------
-    # Build PCC-CNN Model
+    # Build PCC-ANN Model
     # ------------------------------------------------------
 
-    print("\nBuilding PCC-CNN Model...")
+    print("\nBuilding PCC-ANN Model...")
 
-    model = build_pcc_cnn(
-        input_shape=(X_train.shape[1], 1),
+    model = build_pcc_ann(
+        input_shape=X_train.shape[1],
         classification=CLASSIFICATION,
         num_classes=len(np.unique(y))
     )
@@ -478,7 +458,7 @@ for fold, (train_idx, test_idx) in enumerate(skf.split(X, y), start=1):
     plt.legend()
     plt.savefig(
     os.path.join(
-        RESULT_SAVE_PATH,
+        RESULT_DIR,
         f"loss_fold_{fold}.png"
         )
         
@@ -494,7 +474,7 @@ for fold, (train_idx, test_idx) in enumerate(skf.split(X, y), start=1):
     plt.legend()
     plt.savefig(
     os.path.join(
-        RESULT_SAVE_PATH,
+        RESULT_DIR,
         f"accuracy_fold_{fold}.png"
         )
         
@@ -504,7 +484,7 @@ for fold, (train_idx, test_idx) in enumerate(skf.split(X, y), start=1):
     
     history_df.to_csv(
     os.path.join(
-        RESULT_SAVE_PATH,
+        RESULT_DIR,
 
         f"history_fold_{fold}.csv"
         
@@ -558,7 +538,7 @@ for fold, (train_idx, test_idx) in enumerate(skf.split(X, y), start=1):
 
     os.path.join(
 
-        RESULT_SAVE_PATH,
+        RESULT_DIR,
 
         f"roc_fold_{fold}.csv"
 
@@ -646,7 +626,7 @@ for fold, (train_idx, test_idx) in enumerate(skf.split(X, y), start=1):
 
     os.path.join(
 
-        RESULT_SAVE_PATH,
+        RESULT_DIR,
 
         f"confusion_matrix_fold_{fold}.csv"
         )
@@ -696,7 +676,7 @@ for fold, (train_idx, test_idx) in enumerate(skf.split(X, y), start=1):
 
             MODEL_DIR,
 
-            "best_model.keras"
+            "best_ann_model.keras"
 
         )
 
@@ -758,7 +738,7 @@ summary = pd.DataFrame({
         results_df["Accuracy"].mean(),
         results_df["Precision"].mean(),
         results_df["Recall"].mean(),
-        results_df["F1 Score"].mean(),
+        results_df["F1"].mean(),
         results_df["AUC"].mean(),
         results_df["Specificity"].mean()
     ],
@@ -767,7 +747,7 @@ summary = pd.DataFrame({
         results_df["Accuracy"].std(),
         results_df["Precision"].std(),
         results_df["Recall"].std(),
-        results_df["F1 Score"].std(),
+        results_df["F1"].std(),
         results_df["AUC"].std(),
         results_df["Specificity"].std()
     ]
@@ -777,7 +757,7 @@ summary = pd.DataFrame({
 summary.to_csv(
 
     os.path.join(
-        RESULT_SAVE_PATH,
+        RESULT_DIR,
         "experiment_summary.csv"
     ),
 

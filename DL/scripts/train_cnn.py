@@ -14,7 +14,8 @@ from sklearn.metrics import (
     recall_score,
     f1_score,
     roc_auc_score,
-    confusion_matrix
+    confusion_matrix,
+    roc_curve
 )
 
 
@@ -167,12 +168,12 @@ DATASET_FILE = (
 )
 
 MODEL_DIR = (
-    f"{PROJECT_ROOT}/MODELS/"
+    f"{PROJECT_ROOT}/DL/MODELS/CNN/"
     f"threshold_{THRESHOLD}"
 )
 
 RESULT_DIR = (
-    f"{PROJECT_ROOT}/RESULTS/"
+    f"{PROJECT_ROOT}/DL/RESULTS/CNN/"
     f"threshold_{THRESHOLD}"
 )
 
@@ -367,15 +368,15 @@ for fold, (train_idx, test_idx) in enumerate(skf.split(X, y), start=1):
     import joblib
     # Save scaler (only once)
     if fold == 1:
-        os.makedirs(MODEL_SAVE_PATH, exist_ok=True)
+        os.makedirs(MODEL_DIR, exist_ok=True)
         joblib.dump(
         scaler,
         os.path.join(
-                  MODEL_SAVE_PATH,
+                  MODEL_DIR,
                             "scaler.pkl"
         )
        )
-       print("Scaler Saved.")
+    print("Scaler Saved.")
        
     print("Training Mean :", np.mean(X_train))
     print("Training Std  :", np.std(X_train))
@@ -478,7 +479,7 @@ for fold, (train_idx, test_idx) in enumerate(skf.split(X, y), start=1):
     plt.legend()
     plt.savefig(
     os.path.join(
-        RESULT_SAVE_PATH,
+        RESULT_DIR,
         f"loss_fold_{fold}.png"
         )
         
@@ -494,7 +495,7 @@ for fold, (train_idx, test_idx) in enumerate(skf.split(X, y), start=1):
     plt.legend()
     plt.savefig(
     os.path.join(
-        RESULT_SAVE_PATH,
+        RESULT_DIR,
         f"accuracy_fold_{fold}.png"
         )
         
@@ -504,7 +505,7 @@ for fold, (train_idx, test_idx) in enumerate(skf.split(X, y), start=1):
     
     history_df.to_csv(
     os.path.join(
-        RESULT_SAVE_PATH,
+        RESULT_DIR,
 
         f"history_fold_{fold}.csv"
         
@@ -558,7 +559,7 @@ for fold, (train_idx, test_idx) in enumerate(skf.split(X, y), start=1):
 
     os.path.join(
 
-        RESULT_SAVE_PATH,
+        RESULT_DIR,
 
         f"roc_fold_{fold}.csv"
 
@@ -646,7 +647,7 @@ for fold, (train_idx, test_idx) in enumerate(skf.split(X, y), start=1):
 
     os.path.join(
 
-        RESULT_SAVE_PATH,
+        RESULT_DIR,
 
         f"confusion_matrix_fold_{fold}.csv"
         )
@@ -758,7 +759,7 @@ summary = pd.DataFrame({
         results_df["Accuracy"].mean(),
         results_df["Precision"].mean(),
         results_df["Recall"].mean(),
-        results_df["F1 Score"].mean(),
+        results_df["F1"].mean(),
         results_df["AUC"].mean(),
         results_df["Specificity"].mean()
     ],
@@ -767,7 +768,7 @@ summary = pd.DataFrame({
         results_df["Accuracy"].std(),
         results_df["Precision"].std(),
         results_df["Recall"].std(),
-        results_df["F1 Score"].std(),
+        results_df["F1"].std(),
         results_df["AUC"].std(),
         results_df["Specificity"].std()
     ]
@@ -777,7 +778,7 @@ summary = pd.DataFrame({
 summary.to_csv(
 
     os.path.join(
-        RESULT_SAVE_PATH,
+        RESULT_DIR,
         "experiment_summary.csv"
     ),
 
