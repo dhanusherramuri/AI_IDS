@@ -6,11 +6,29 @@ import joblib
 import matplotlib.pyplot as plt
 from sklearn.metrics import ConfusionMatrixDisplay
 
-CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+# Add project root to path so COMMON module can be found
+_current_dir = os.path.dirname(os.path.abspath(__file__))
+for _ in range(5):
+    if os.path.isdir(os.path.join(_current_dir, 'COMMON')):
+        sys.path.insert(0, _current_dir)
+        break
+    parent = os.path.dirname(_current_dir)
+    if parent == _current_dir:
+        break
+    _current_dir = parent
 
-PROJECT_DIR = os.path.dirname(CURRENT_DIR)
+# Add utils to path so utils.plots can be found
+_current_dir = os.path.dirname(os.path.abspath(__file__))
+for _ in range(5):
+    if os.path.isdir(os.path.join(_current_dir, 'utils')):
+        sys.path.insert(0, _current_dir)
+        break
+    parent = os.path.dirname(_current_dir)
+    if parent == _current_dir:
+        break
+    _current_dir = parent
 
-sys.path.append(PROJECT_DIR)
+from COMMON.config import PROJECT_ROOT
 
 from utils.plots import (
     save_confusion_matrix,
@@ -58,8 +76,6 @@ N_SPLITS = 10
 # ==========================================================
 # PATHS
 # ==========================================================
-
-PROJECT_ROOT = "/home/dhanush2026/dhanush2026/AI_IDS"
 
 DATASET_FILE = (
     f"{PROJECT_ROOT}/PCC_RESULTS/"
